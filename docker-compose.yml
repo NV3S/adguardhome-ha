@@ -1,0 +1,130 @@
+version: "3.9"
+services:
+  adguardhome_1st:
+    image: adguard/adguardhome
+    hostname: adguardhome_1st
+    environment:
+      - PUID=1026
+      - PGID=100
+      - TZ=Asia/Shanghai
+    volumes:
+      - nfs_adg_1st_conf_path:/opt/adguardhome/conf
+      - nfs_adg_1st_work_path:/opt/adguardhome/work
+    networks:
+      - adg_ha_overlay
+    ports:
+      - target: 53
+        published: 53
+        protocol: tcp
+        mode: host
+      - target: 53
+        published: 53
+        protocol: udp
+        mode: host
+      - target: 3000
+        published: 3000
+        protocol: tcp
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.hostname == archlinux-101]
+      
+  adguardhome_2nd:
+    image: adguard/adguardhome
+    hostname: adguardhome_2nd
+    environment:
+      - PUID=1026
+      - PGID=100
+      - TZ=Asia/Shanghai
+    volumes:
+      - nfs_adg_2nd_conf_path:/opt/adguardhome/conf
+      - nfs_adg_2nd_work_path:/opt/adguardhome/work
+    networks:
+      - adg_ha_overlay
+    ports:
+      - target: 53
+        published: 53
+        protocol: tcp
+        mode: host
+      - target: 53
+        published: 53
+        protocol: udp
+        mode: host
+      - target: 3000
+        published: 3001
+        protocol: tcp
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.hostname == archlinux-102]
+ 
+  adguardhome-sync:
+    image: ghcr.io/bakito/adguardhome-sync
+    command: run
+    networks:
+      - adg_ha_overlay
+    environment:
+      # Origin Server is you first server.  For first time run connect to port 3000, set username and password to what you set bellow for source and origin, settings and move admin interface port 80 when propmted.
+      - ORIGIN_URL=${ORIGIN_URL}
+      - ORIGIN_USERNAME=${ORIGIN_USERNAME}
+      - ORIGIN_PASSWORD=${ORIGIN_PASSWORD}
+      # replica server - this will be setup automatically
+      - REPLICA_AUTOSETUP=true # if true, AdGuardHome is automatically initialized. 
+      - REPLICA_URL=${REPLICA_URL}  #note the autosetup will not move this port to 3000, hoever as it is replica it doesn't really need to be moved
+      - REPLICA_USERNAME=${REPLICA_USERNAME}
+      - REPLICA_PASSWORD=${REPLICA_PASSWORD}
+      - CRON=*/1 * * * * # run every 1 minutes
+      - RUNONSTART=true
+      # Configure sync features; by default all features are enabled.
+      # - FEATURES_GENERALSETTINGS=true
+      # - FEATURES_QUERYLOGCONFIG=true
+      # - FEATURES_STATSCONFIG=true
+      # - FEATURES_CLIENTSETTINGS=true
+      # - FEATURES_SERVICES=true
+      # - FEATURES_FILTERS=true
+      # - FEATURES_DHCP_SERVERCONFIG=true
+      # - FEATURES_DHCP_STATICLEASES=true
+      # - FEATURES_DNS_SERVERCONFIG=true
+      # - FEATURES_DNS_ACCESSLISTS=true
+      # - FEATURES_DNS_REWRITES=true
+      # FEATURES_DNS_ACCESSLISTS: true
+      # FEATURES_DNS_REWRITES: true
+
+
+
+
+volumes:
+  nfs_adg_1st_conf_path:
+     driver: local
+     driver_opts:
+       type: nfs
+       device: ":${DOCKER_PATH}/adguardhome/conf_1st"
+       o: "addr=${NFS_ADDR},${NFS_OPTION}"
+     
+  nfs_adg_1st_work_path:
+     driver: local
+     driver_opts:
+       type: nfs
+       device: ":${DOCKER_PATH}/adguardhome/work_1st"
+       o: "addr=${NFS_ADDR},${NFS_OPTION}"
+   
+  nfs_adg_2nd_conf_path:
+     driver: local
+     driver_opts:
+       type: nfs
+       device: ":${DOCKER_PATH}/adguardhome/conf_2nd"
+       o: "addr=${NFS_ADDR},${NFS_OPTION}"
+     
+  nfs_adg_2nd_work_path:
+     driver: local
+     driver_opts:
+       type: nfs
+       device: ":${DOCKER_PATH}/adguardhome/work_2nd"
+       o: "addr=${NFS_ADDR},${NFS_OPTION}"
+
+networks:
+  adg_ha_overlay:
+    driver: overlay
+    attachable: true
