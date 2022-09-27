@@ -43,6 +43,8 @@ services:
         # Traefik同时会在此对横向拓展的容器建立负载均衡
         # 更多见https://docs.traefik.io/routing/services/
         - "traefik.http.services.adg.loadbalancer.server.port=3000"
+        - "traefik.http.services.adg.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.adg.loadbalancer.sticky.cookie.name=adg_1st_cookie"
       
   adguardhome_2nd:
     image: adguard/adguardhome
@@ -87,6 +89,8 @@ services:
         # Traefik同时会在此对横向拓展的容器建立负载均衡
         # 更多见https://docs.traefik.io/routing/services/
         - "traefik.http.services.adg.loadbalancer.server.port=3000"
+        - "traefik.http.services.adg.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.adg.loadbalancer.sticky.cookie.name=adg_2nd_cookie"
  
   adguardhome-sync:
     image: ghcr.io/bakito/adguardhome-sync
