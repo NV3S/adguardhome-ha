@@ -44,7 +44,7 @@ services:
         # 更多见https://docs.traefik.io/routing/services/
         - "traefik.http.services.adg.loadbalancer.server.port=3000"
         - "traefik.http.services.adg.loadbalancer.sticky.cookie=true"
-        - "traefik.http.services.adg.loadbalancer.sticky.cookie.name=adg_1st_cookie"
+        #- "traefik.http.services.adg.loadbalancer.sticky.cookie.name=adg_1st_cookie"
       
   adguardhome_2nd:
     image: adguard/adguardhome
@@ -90,7 +90,7 @@ services:
         # 更多见https://docs.traefik.io/routing/services/
         - "traefik.http.services.adg.loadbalancer.server.port=3000"
         - "traefik.http.services.adg.loadbalancer.sticky.cookie=true"
-        - "traefik.http.services.adg.loadbalancer.sticky.cookie.name=adg_2nd_cookie"
+        #- "traefik.http.services.adg.loadbalancer.sticky.cookie.name=adg_2nd_cookie"
  
   adguardhome-sync:
     image: ghcr.io/bakito/adguardhome-sync
