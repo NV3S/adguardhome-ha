@@ -12,6 +12,7 @@ services:
       - nfs_adg_1st_work_path:/opt/adguardhome/work
     networks:
       - adg_ha_overlay
+      - traefik_overlay
     ports:
       - target: 53
         published: 53
@@ -29,6 +30,19 @@ services:
       replicas: 1
       placement:
         constraints: [node.hostname == archlinux-101]
+      labels:
+        # 对外暴露容器服务
+        - "traefik.enable=true"
+        # 对外访问的路由地址，路由规则请参考官网
+        # https://docs.traefik.io/routing/routers/
+        - "traefik.http.routers.adg.rule=Host(`${ADG_HOST_URL}`)"
+        # 对外暴露的入口点
+        - "traefik.http.routers.adg.entrypoints=web"
+        # 容器内的入口点，treafik无法获知你的服务的访问入口点
+        # 所以你必须以此告诉Traefik
+        # Traefik同时会在此对横向拓展的容器建立负载均衡
+        # 更多见https://docs.traefik.io/routing/services/
+        - "traefik.http.services.adg.loadbalancer.server.port=3000"
       
   adguardhome_2nd:
     image: adguard/adguardhome
@@ -42,6 +56,7 @@ services:
       - nfs_adg_2nd_work_path:/opt/adguardhome/work
     networks:
       - adg_ha_overlay
+      - traefik_overlay
     ports:
       - target: 53
         published: 53
@@ -59,6 +74,19 @@ services:
       replicas: 1
       placement:
         constraints: [node.hostname == archlinux-102]
+      labels:
+        # 对外暴露容器服务
+        - "traefik.enable=true"
+        # 对外访问的路由地址，路由规则请参考官网
+        # https://docs.traefik.io/routing/routers/
+        - "traefik.http.routers.adg.rule=Host(`${ADG_HOST_URL}`)"
+        # 对外暴露的入口点
+        - "traefik.http.routers.adg.entrypoints=web"
+        # 容器内的入口点，treafik无法获知你的服务的访问入口点
+        # 所以你必须以此告诉Traefik
+        # Traefik同时会在此对横向拓展的容器建立负载均衡
+        # 更多见https://docs.traefik.io/routing/services/
+        - "traefik.http.services.adg.loadbalancer.server.port=3000"
  
   adguardhome-sync:
     image: ghcr.io/bakito/adguardhome-sync
@@ -128,3 +156,6 @@ networks:
   adg_ha_overlay:
     driver: overlay
     attachable: true
+  traefik_overlay:
+    external: true
+
